@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>element-ui的el-checkbox嵌套多选</title>
+    <!-- <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"> -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <style>
+        .content {
+            width: 100%;
+            max-height: 640px;
+        }
+
+        .title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-right: 10px;
+        }
+
+        .sizeColor {
+            color: #1890FD;
+        }
+
+        .optionalMenu {
+            margin-top: 20px;
+        }
+
+        .line {
+            display: block;
+            width: 100%;
+            height: 1px;
+            background-color: rgba(0, 0, 0, 0.06);
+            margin-top: 20px
+        }
+
+        .el-checkbox {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body >
+    <div id="outputFile">
+        <div class="content">
+            <i class="line"></i>
+            <p style="margin:25px 0px 15px ">当前已选择{{total}}条企业信息数据进行导出，请从下方列表中勾选需导出的企业信息项。</p>
+            <div v-for="(item,$index) in originData" :key="$index">
+                <!-- 默认导出项 -->
+                <div v-if="$index ==0">
+                    <p class="title sizeColor">{{item.label}}</p>
+                    <el-checkbox v-for="list in item.children" :label='list.prop' :key='list.prop' checked disabled>
+                        {{list.label}}</el-checkbox>
+                </div>
+                <!-- 可选导出项 -->
+                <div v-if="$index > 0">
+                    <div style="margin-top:20px" v-if="$index == 1">
+                        <span class="title sizeColor">可选导出项</span>
+                        <el-checkbox :indeterminate='indeterminate' v-model="allOptionalCheck"
+                            @change='handleCheckOptionalAll'><span class="sizeColor">全选</span></el-checkbox>
+                    </div>
+                    <div>
+                        <span class="title">{{item.label}} </span>
+                        <el-checkbox :indeterminate='allData[$index].indeterminate' v-model="allData[$index].checkAll"
+                            @change='handleCheckAll($index,$event)'><span class="sizeColor">全选</span></el-checkbox>
+                        <div style="margin:15px 0"></div>
+                        <el-checkbox-group v-model="allData[$index].selection" @change='handleCheck($index,$event)'>
+                            <el-checkbox v-for="(list,listIndex) in item.children" :label='list.prop' :key='listIndex'>
+                                {{list.label}}</el-checkbox>
+                        </el-checkbox-group>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <i class="line"></i>
+        <div slot="footer" class="dialog-footer" style="text-align: right;margin-bottom:20px;margin-top:20px;">
+            <el-button size="small" class="zhfc-button " @click="closeClick">取消</el-button>
+            <el-button size="small" class="zhfc-button primary" @click="confirmData">确 定</el-button>
+        </div>
+    </div>
+</body>
+<!-- <script src="https://cdn.bootcss.com/vue/2.6.3/vue.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script> -->
+<script>
+    // import {result} from './data2.js'
+    new Vue({
+        el: "#outputFile",
+        data() {
+            return {
+                originData: '',//接口数据源
+                allData: [],//绑定勾选数据
+                allOptionalCheck: false,//可选导出的全选
+                indeterminate: false,//可选导出的样式
+                total: '52',
+            }
+        },
+        created() {
+            this.originData = [
+                {
+                "children": [{
+                    "id": "",
+                    "label": "企业(单位)编号",
+                    "prop": "ORGCODE",
+                    "stor": "0"
+                },
+                {
+                    "id": "",
+                    "label": "企业(单位)名称",
+                    "prop": "ORGNAME",
+                    "stor": "1"
+                },
+                {
+                    "id": "",
+                    "label": "注册地",
+                    "prop": "REGIONCODE",
+                    "stor": "2"
+                },
+                {
+                    "id": "",
+                    "label": "社会统一信用代码",
+                    "prop": "SOCIALCREDITCODE",
+                    "stor": "3"
+                },
+                {
+                    "id": "",
+                    "label": "状态",
+                    "prop": "STATUS",
+                    "stor": "4"
+                },
+                {
+                    "id": "",
+                    "label": "锁定状态",
+                    "prop": "LOCKSTATUS",
+                    "stor": "5"
+                },
+                {
+                    "id": "",
+                    "label": "注册资本",
+                    "prop": "REGICAPITAL",
+                    "stor": "6"
+                },
+                {
+                    "id": "",
+                    "label": "资质证书编号",
+                    "prop": "CERTIFICATENO",
+                    "stor": "7"
+                },
+                {
+                    "id": "",
+                    "label": "资质有效期",
+                    "prop": "QUALIFICATIONEND",
+                    "stor": "8"
+                },
+                {
+                    "id": "",
+                    "label": "审批日期",
+                    "prop": "AUDITDATE",
+                    "stor": "9"
+                },
+                {
+                    "id": "",
+                    "label": "注销日期",
+                    "prop": "CANCELDATE",
+                    "stor": "10"
+                }],
+                "dateFormat": "",
+                "disabled": "",
+                "groupId": "",
+                "id": "",
+                "label": "默认导出项",
+                "prop": "mrdcx",
+                "stor": "0"
+            },
+                {
+                "children": [{
+                    "busType": "11",
+                    "id": "C735E62638507A83E0534BECC4800718",
+                    "label": "委托代理人",
+                    "prop": "ENTRUSTNAME",
+                    "stor": "12"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638537A83E0534BECC4800718",
+                    "label": "联系电话",
+                    "prop": "ENTRUSTTEL",
+                    "stor": "13"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638517A83E0534BECC4800718",
+                    "label": "证件类型",
+                    "prop": "IDTYPE",
+                    "stor": "14"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638527A83E0534BECC4800718",
+                    "label": "证件号码",
+                    "prop": "IDCODE",
+                    "stor": "15"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638547A83E0534BECC4800718",
+                    "label": "性别",
+                    "prop": "GENDER",
+                    "stor": "16"
+                }],
+                "dateFormat": "",
+                "disabled": "",
+                "groupId": "",
+                "id": "C735E626384C7A83E0534BECC4800718",
+                "label": "委托信息",
+                "prop": "SBXX",
+                "stor": "1"
+            },
+                {
+                "children": [{
+                    "busType": "11",
+                    "id": "CFF14098FCCAD558E0534BECC4803DAE",
+                    "label": "企业简称",
+                    "prop": "SHORTNAME",
+                    "stor": "17"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E626385B7A83E0534BECC4800718",
+                    "label": "母公司",
+                    "prop": "PARENTORGNAME",
+                    "stor": "18"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638587A83E0534BECC4800718",
+                    "label": "企业类型",
+                    "prop": "ORGTYPE",
+                    "stor": "19"
+                },
+                {
+                    "busType": "11",
+                    "id": "CFF14098FCCCD558E0534BECC4803DAE",
+                    "label": "企业邮箱",
+                    "prop": "EMAIL",
+                    "stor": "20"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E626385C7A83E0534BECC4800718",
+                    "label": "负责人",
+                    "prop": "AGENT",
+                    "stor": "21"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E626385D7A83E0534BECC4800718",
+                    "label": "负责人联系电话",
+                    "prop": "TEL",
+                    "stor": "22"
+                },
+                {
+                    "busType": "11",
+                    "id": "CFF14098FCCBD558E0534BECC4803DAE",
+                    "label": "企业网站",
+                    "prop": "WEBSITE",
+                    "stor": "23"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E626385F7A83E0534BECC4800718",
+                    "label": "项目所在区域",
+                    "prop": "PROJECTAREA",
+                    "stor": "24"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638607A83E0534BECC4800718",
+                    "label": "实收资本",
+                    "prop": "PICALCAPITAL",
+                    "stor": "25"
+                },
+                {
+                    "busType": "6",
+                    "id": "C735E62638237A83E0534BECC4800718",
+                    "label": "银行类型",
+                    "prop": "BANKID",
+                    "stor": "26"
+                }],
+                "dateFormat": "",
+                "disabled": "",
+                "groupId": "",
+                "id": "C735E62638567A83E0534BECC4800718",
+                "label": "企业信息",
+                "prop": "QYXX",
+                "stor": "2"
+            },
+                {
+                "children": [{
+                    "busType": "11",
+                    "id": "C735E626386F7A83E0534BECC4800718",
+                    "label": "成立日期",
+                    "prop": "FOUNDDATE",
+                    "stor": "27"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638647A83E0534BECC4800718",
+                    "label": "营业期限",
+                    "prop": "LICENSEEND",
+                    "stor": "28"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638657A83E0534BECC4800718",
+                    "label": "法定代表人",
+                    "prop": "LEGALPERSON",
+                    "stor": "29"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638717A83E0534BECC4800718",
+                    "label": "证件类型",
+                    "prop": "LEGALPERSONIDTYPE",
+                    "stor": "30"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638727A83E0534BECC4800718",
+                    "label": "法人证件号",
+                    "prop": "LEGALPERSONID",
+                    "stor": "31"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638737A83E0534BECC4800718",
+                    "label": "法人联系电话",
+                    "prop": "LEGALPERSONTEL",
+                    "stor": "32"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638687A83E0534BECC4800718",
+                    "label": "公司类型",
+                    "prop": "ORGNATURE",
+                    "stor": "33"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638777A83E0534BECC4800718",
+                    "label": "发证机关",
+                    "prop": "LICENSEAUTHORITY",
+                    "stor": "34"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638787A83E0534BECC4800718",
+                    "label": "发证日期",
+                    "prop": "LICENSEBEGIN",
+                    "stor": "35"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638747A83E0534BECC4800718",
+                    "label": "住所",
+                    "prop": "PROVINCE",
+                    "stor": "36"
+                },
+                {
+                    "busType": "11",
+                    "id": "CFF14098FCC9D558E0534BECC4803DAE",
+                    "label": "邮政编码",
+                    "prop": "REGIZIP",
+                    "stor": "37"
+                },
+                {
+                    "busType": "11",
+                    "id": "CB0E6F3679870212E0534BECC480A8F6",
+                    "label": "经营地址",
+                    "prop": "OFFICEOBJECT",
+                    "stor": "38"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E626386D7A83E0534BECC4800718",
+                    "label": "经营范围",
+                    "prop": "BUSINESSSCOPE",
+                    "stor": "39"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E626386E7A83E0534BECC4800718",
+                    "label": "备注",
+                    "prop": "NOTE",
+                    "stor": "40"
+                }],
+                "dateFormat": "",
+                "disabled": "",
+                "groupId": "",
+                "id": "C735E62638627A83E0534BECC4800718",
+                "label": "工商信息",
+                "prop": "YYZZXX",
+                "stor": "3"
+            },
+                {
+                "children": [{
+                    "busType": "11",
+                    "id": "C735E62638867A83E0534BECC4800718",
+                    "label": "资质等级名称",
+                    "prop": "QUALIFICATIONGRADE",
+                    "stor": "41"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638877A83E0534BECC4800718",
+                    "label": "发证机关",
+                    "prop": "AUTHORITY",
+                    "stor": "42"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E626387C7A83E0534BECC4800718",
+                    "label": "发证日期",
+                    "prop": "QUALIFICATIONBEGIN",
+                    "stor": "43"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638827A83E0534BECC4800718",
+                    "label": "批准从事房地产开发经营业务时间",
+                    "prop": "ESTATEDATE",
+                    "stor": "44"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638837A83E0534BECC4800718",
+                    "label": "批准文号",
+                    "prop": "APPROVALNUMBER",
+                    "stor": "45"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E62638857A83E0534BECC4800718",
+                    "label": "证书状态",
+                    "prop": "CERTIFICATESTATE",
+                    "stor": "46"
+                },
+                {
+                    "busType": "11",
+                    "id": "C735E626387E7A83E0534BECC4800718",
+                    "label": "换证备注",
+                    "prop": "REPLACEMENTNOTE",
+                    "stor": "47"
+                },
+                {
+                    "busType": "12",
+                    "id": "f504be7c-5fc8-49de-a9a9-96dece2ea919",
+                    "label": "经营范围",
+                    "prop": "BROKERBUSINESSSCOPE",
+                    "stor": "48"
+                },
+                {
+                    "busType": "12",
+                    "id": "C735E62638BE7A83E0534BECC4800718",
+                    "label": "房地产经纪人/数量",
+                    "prop": "REALTORSNUMBER",
+                    "stor": "49"
+                },
+                {
+                    "busType": "12",
+                    "id": "C735E62638BF7A83E0534BECC4800718",
+                    "label": "经纪人协理数量",
+                    "prop": "REALTORSASSNUMBER",
+                    "stor": "50"
+                }],
+                "dateFormat": "",
+                "disabled": "",
+                "groupId": "",
+                "id": "C735E62638797A83E0534BECC4800718",
+                "label": "资质信息",
+                "prop": "ZZXX",
+                "stor": "4"
+            }
+            ]
+            // this.getData()
+            this.initData(this.originData)
+        },
+        methods: {
+            // getData(){
+            //    this.postRequest("/pract/fromInfo/getExportFrom", {}).then((res) => {
+            //     this.originData = res
+            // });
+            // },
+            initData(data) {
+                for (let i = 0; i < data.length; i++) {
+                    this.allData.push({
+                        data: data[i],
+                        selection: [],
+                        checkAll: false,
+                        indeterminate: false,
+                        allSelection: this.initAllSelect(data[i], i),
+                    })
+                }
+
+            },
+            // 初始化各模块的默认全选
+            initAllSelect(data, index) {
+                let allSelection = [];
+                for (let i = 0; i < data.children.length; i++) {
+                    allSelection.push(data.children[i].prop)
+                }
+                return allSelection
+            },
+            handleCheck(index, value) {
+                let allSelection = this.allData[index].allSelection;
+                this.allData[index].checkAll = value.length === allSelection.length;
+                this.allData[index].indeterminate = value.length > 0 && value.length < allSelection.length;
+                this.isAllSelection();
+            },
+            handleCheckAll(index, value) {
+                let allSelection = this.allData[index].allSelection;
+                this.allData[index].selection = value ? allSelection : []
+                this.allData[index].indeterminate = false;
+                this.isAllSelection();
+            },
+            handleCheckOptionalAll(val) {
+                if (val) {
+                    for (let i = 0; i < this.allData.length; i++) {
+                        this.allData[i].selection = this.allData[i].allSelection;
+                        this.allData[i].checkAll = true;
+                        this.allData[i].indeterminate = false;
+                        this.indeterminate = false;
+                    }
+                } else {
+                    for (let i = 1; i < this.allData.length; i++) {
+                        this.allData[i].selection = [];
+                        this.allData[i].checkAll = false;
+                    }
+                }
+            },
+            // 改变可选导出项的全选
+            isAllSelection() {
+                let optionalSelect = [];
+                let allSelection = [];
+                // 可选从下标1开始
+                for (let i = 1; i < this.allData.length; i++) {
+                    optionalSelect = optionalSelect.concat(this.allData[i].selection);
+                    allSelection = allSelection.concat(this.allData[i].allSelection);
+                } if (optionalSelect.length > 0 && optionalSelect.length < allSelection.length) {
+                    this.indeterminate = true
+                } else {
+                    this.indeterminate = false
+                }
+                this.allOptionalCheck = optionalSelect.length == allSelection.length
+            },
+            confirmData() {
+                let params = [];
+                for (let i = 1; i < this.allData.length; i++) {
+                    params = params.concat(this.getFormat(i))
+                }
+                console.log(params);
+                //let downLoadUrl = `${location.origin}/下载url接口?${qs.stringify(params)}`;
+
+            },
+            getFormat(index) {
+                let selection = this.allData[index].selection
+                for (let i = 0; i < selection.length; i++) {
+                    this.allData[index].data.children.forEach(item => {
+                        if (selection[i] == item.prop) {
+                            selection[i] = {
+                                prop: item.prop,
+                                label: item.label,
+                                stor: item.stor
+                            }
+                        }
+                    })
+                }
+                return selection
+            },
+            closeClick() {
+                this.$emit("closeExport");
+            },
+        },
+    })
+</script>
+
+</html>
